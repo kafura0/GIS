@@ -1,55 +1,76 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Draw AOI</title>
-
+  <title>Leaflet Map</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css"/>
-
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
-  <style>
-    #map { height: 95vh; width: 100vw; }
-  </style>
 </head>
+
 <body>
+  <div id="map" style="height: 600px;"></div>
 
-<div id="map"></div>
-
-<script>
-  const map = L.map('map').setView([0.0236, 37.9062], 6); // Kenya center
+  <script>
+  var map = L.map('map').setView([-1.286389, 36.817223], 12);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
+    attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  const drawnItems = new L.FeatureGroup();
+  // Feature group will store drawn items
+  var drawnItems = new L.FeatureGroup();
   map.addLayer(drawnItems);
 
-  const drawControl = new L.Control.Draw({
-    edit: { featureGroup: drawnItems },
-    draw: { polygon: true, polyline: false, rectangle: false, circle: false, marker: false }
+  // Add draw control
+  var drawControl = new L.Control.Draw({
+    edit: {
+      featureGroup: drawnItems
+    },
+    draw: {
+      marker: false,
+      circle: false,
+      polyline: false,
+      rectangle: true,
+      polygon: true,
+      circlemarker: false
+    }
   });
   map.addControl(drawControl);
 
+  // Listen when user finishes a polygon
   map.on(L.Draw.Event.CREATED, function (event) {
-    const layer = event.layer;
+    var layer = event.layer;
     drawnItems.addLayer(layer);
 
-    const geojson = layer.toGeoJSON();
+    // Convert to GeoJSON
+    var geojson = layer.toGeoJSON();
+    var geometry = geojson.geometry;
 
-    fetch("http://127.0.0.1:8000/api/aoi/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(geojson)
+    console.log("GeoJSON:", JSON.stringify(geometry));
+
+    // Send to backend
+  const gj = layer.toGeoJSON();
+  fetch("/api/aoi/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+        name: "From Leaflet",
+        geom: gj.geometry
     })
-    .then(r => r.json())
-    .then(data => alert("AOI saved! ID: " + data.id))
+});
+
+    .then(async res => {
+      const txt = await res.text();
+      console.log(res.status, txt);
+      alert("AOI sent, server response: " + res.status);
+    })
     .catch(err => console.error(err));
   });
 </script>
+
 </body>
 </html>

@@ -1,0 +1,22 @@
+# Virtual environments
+venv/
+*/venv/
+fastapi-backend/venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Env files
+.env
+
+# IDE folders
+.vscode/
+.idea/
+
+# Databases
+*.db
+*.sqlite3
+*.sqlite

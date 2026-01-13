@@ -1,14 +1,13 @@
-from pydantic import BaseModel
-from typing import List
-from shapely.geometry import mapping, shape
+from pydantic import BaseModel, Field
 
 class AOICreate(BaseModel):
-    # Accept a GeoJSON polygon
-    geojson: dict
+    geom: dict = Field(..., description="GeoJSON geometry")
+    name: str | None = None
 
 class AOIResponse(BaseModel):
     id: int
-    geojson: dict
+    name: str | None
+    geom: dict
 
     class Config:
-        orm_mode = True
+        from_attributes = True   # formerly orm_mode
